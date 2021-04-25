@@ -1,0 +1,372 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+
+
+MySqlConnection con = new MySqlConnection("server=localhost;uid=root;password='';database=summano;");
+            
+            try {
+                con.Open();
+                MessageBox.Show("success");
+            }
+            catch(Exception ex) {
+                MessageBox.Show(ex.Message);
+            }
+
+class DB
+    {
+        public static SqlConnection cnn() {
+
+   SqlConnection con = new SqlConnection(@"Data source=DESKTOP-N1E61DU\SQLEXPRESS;Initial   
+   Catalog=smartcards;Integrated Security=True;");
+            con.Open();
+                                       return con;
+        }
+    }
+
+public partial class frmMaster : Form
+    {
+        private DataTable dt = new DataTable();
+        private DataSet ds = new DataSet();
+        public frmMaster()
+        {
+            InitializeComponent();
+        }
+
+        public DataGridView dgv { get; set; }
+
+   
+        private void frmMaster_Load(object sender, EventArgs e)
+        {
+            WindowState = FormWindowState.Maximized;
+            dataGridView1.DataSource = BindSource();
+        }
+
+        public DataTable BindSource()
+        {
+            SqlDataAdapter adapter = new SqlDataAdapter("SELECT ident,prename_th,firstname_th,lastname_th,prename_en,firstname_en,lastname_en,DATEDIFF(year,birthdate,CAST(GETDATE() AS Date)) as old,sex,phone,startdate,enddate,type FROM tb_data order by id desc", DB.cnn());
+            ds.Clear();
+            adapter.Fill(ds);
+            dt = ds.Tables[0];
+            return dt;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public DataTable BindSearch()
+        {
+            SqlDataAdapter adapter = new SqlDataAdapter("SELECT id,ident,prename_th,firstname_th,lastname_th,DATEDIFF(year,birthdate,CAST(GETDATE() AS Date)) as old,sex,startdate,enddate,type FROM tb_data where id='1'", DB.cnn());
+            ds.Clear();
+            adapter.Fill(ds);
+            dt = ds.Tables[0];
+            return dt;
+        }
+
+        public void show1() {
+     
+            SqlDataAdapter da = new SqlDataAdapter("SELECT id,ident,prename_th,firstname_th,lastname_th,DATEDIFF(year,birthdate,CAST(GETDATE() AS Date)) as old,sex,startdate,enddate,type FROM tb_data", DB.cnn());
+            DataSet ds = new DataSet();
+            da.Fill(ds, "Data");
+            dataGridView1.DataSource = ds.Tables["Data"].DefaultView;
+            DataGridViewImageColumn imageCol = new DataGridViewImageColumn();
+            dataGridView1.Columns.Add(imageCol);
+        }
+
+        public void show2()
+        {
+            SqlCommand cmd = new SqlCommand("SELECT id,ident,prename_th,firstname_th,lastname_th,DATEDIFF(year,birthdate,CAST(GETDATE() AS Date)) as old,sex,startdate,enddate,type,status FROM tb_data", DB.cnn());
+            SqlDataReader sqlReader = cmd.ExecuteReader();
+            dataGridView1.Rows.Clear();
+
+            if (sqlReader.HasRows)
+            {
+                while (sqlReader.Read())
+                {
+                    string path = @"D:\smartcard\1909800567518.jpg";
+                    dataGridView1.Rows.Add(Bitmap.FromFile(path), sqlReader.GetValue(0), sqlReader.GetValue(1), sqlReader.GetValue(2), sqlReader.GetValue(3), sqlReader.GetValue(4), sqlReader.GetValue(5), sqlReader.GetValue(6), sqlReader.GetValue(7), sqlReader.GetValue(8), sqlReader.GetValue(9));
+                    //dataGridView1.Rows.Add(sqlReader.GetValue(0), sqlReader.GetValue(1));
+                    // MessageBox.Show( + " - " + sqlReader.GetValue(1) + " - " + sqlReader.GetValue(2));
+                }
+            }
+            else {
+                MessageBox.Show("no row");
+            }
+
+         
+        }
+
+        public void setDev()
+        {
+            dataGridView1.Columns[0].HeaderText = "ลำดับ";
+            dataGridView1.Columns[1].HeaderText = "บัตรประชาชน";
+            dataGridView1.Columns[2].HeaderText = "นำชื่อ";
+            dataGridView1.Columns[3].HeaderText = "ชื่อ";
+            dataGridView1.Columns[4].HeaderText = "สกุล";
+            dataGridView1.Columns[5].HeaderText = "อายุ";
+            dataGridView1.Columns[6].HeaderText = "เพศ";
+            dataGridView1.Columns[7].HeaderText = "วันที่เริ่มต้น";
+            dataGridView1.Columns[8].HeaderText = "วันที่สิ้นสุด";
+            dataGridView1.Columns[9].HeaderText = "ประเภท";
+            dataGridView1.Columns[10].HeaderText = "สถานะ";
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            frmMain Main = new frmMain(this);
+            Main.UpdateEventHandler += F2_UpdateEventHandler1;
+            Main.ShowDialog();
+        }
+
+        private void F2_UpdateEventHandler1(object sender, frmMain.UpdateEventArgs args)
+        {
+            dataGridView1.DataSource = BindSource();
+        }
+
+      
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            frmSearch srh = new frmSearch(this);
+            srh.ShowDialog();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {           
+            frmNew news = new frmNew();
+            news.ShowDialog();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            frmMaster masters = new frmMaster();
+            masters.Close();
+                                this.Close();
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            dataGridView1.DataSource = BindSource();
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+                                if (dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+            {
+                MessageBox.Show(dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString());
+            }
+        }
+
+        private void dataGridView1_RowHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            int id =  Convert.ToInt32(dataGridView1.Rows[e.RowIndex].Cells[0].Value);
+            frmDetail detail = new frmDetail(id);
+
+            detail.ShowDialog();
+
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public partial class frmMain : Form
+    {
+        private ThaiIDCard idcard;
+
+        public delegate void UpdateDelegate(object sender, UpdateEventArgs args);
+        public event UpdateDelegate UpdateEventHandler;
+        frmMaster frmmaster;
+
+        public frmMain(frmMaster master)
+        {
+            InitializeComponent();
+            frmmaster = master;
+        }
+
+        public class UpdateEventArgs : EventArgs
+        {
+            public string Data { get; set; }
+        }
+
+        protected void raiseUpdate()
+        {
+            frmmaster.BindSource();
+            UpdateEventArgs args = new UpdateEventArgs();
+            UpdateEventHandler?.Invoke(this, args);
+           
+        }
+        private void button2_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            DateTime birthday = DateTime.Parse(lbl_birthday.Text);
+            DateTime issue = DateTime.Parse(lbl_issue.Text);
+            DateTime expire = DateTime.Parse(lbl_expire.Text);
+            //MessageBox.Show(myDate.ToString("yyyy-MM-d", new CultureInfo("en-US")));
+            using (SqlCommand command = new SqlCommand())
+            {
+                command.Connection = DB.cnn();            // <== lacking
+                command.CommandType = CommandType.Text;
+                command.CommandText = "INSERT into tb_data(ident,image,prename_th,firstname_th,lastname_th,prename_en,firstname_en,lastname_en,birthdate,sex,startdate,enddate,startcard,endcard,address,type,phone,status,create_by,created_at,updated_at) VALUES (@ident,@image,@prename_th,@firstname_th,@lastname_th,@prename_en,@firstname_en,@lastname_en,@birthdate,@sex,@startdate,@enddate,@startcard,@endcard,@address,@type,@phone,@status,@create_by,@created_at,@updated_at)";
+                command.Parameters.AddWithValue("@ident", lbl_cid.Text);
+                command.Parameters.AddWithValue("@image", "1909800567518.jpg");
+                command.Parameters.AddWithValue("@prename_th", lbl_th_prefix.Text);
+                command.Parameters.AddWithValue("@firstname_th", lbl_th_firstname.Text);
+                command.Parameters.AddWithValue("@lastname_th", lbl_th_lastname.Text);
+                command.Parameters.AddWithValue("@prename_en", lbl_en_prefix.Text);
+                command.Parameters.AddWithValue("@firstname_en", lbl_en_firstname.Text);
+                command.Parameters.AddWithValue("@lastname_en", lbl_en_lastname.Text);
+        command.Parameters.AddWithValue("@birthdate", birthday.ToString("yyyy-MM-d", new CultureInfo("en-US")));
+                command.Parameters.AddWithValue("@sex", lbl_sex.Text);
+       command.Parameters.AddWithValue("@startdate",dateStart.Value.ToString("yyyy-MM-d", new CultureInfo("en-US")));
+       command.Parameters.AddWithValue("@enddate", DateTime.Now.ToString("yyyy-MM-d", new CultureInfo("en-US")));
+                command.Parameters.AddWithValue("@startcard", issue.ToString("yyyy-MM-d", new CultureInfo("en-US")));
+                command.Parameters.AddWithValue("@endcard", expire.ToString("yyyy-MM-d", new CultureInfo("en-US")));
+                command.Parameters.AddWithValue("@address",txtAddress.Text);
+                command.Parameters.AddWithValue("@type", cmbType.SelectedValue.ToString());
+                command.Parameters.AddWithValue("@phone", txtPhone.Text);
+                command.Parameters.AddWithValue("@status", "exists");
+                command.Parameters.AddWithValue("@create_by","saw");
+        command.Parameters.AddWithValue("@created_at", DateTime.Now.ToString("yyyy-MM-d", new CultureInfo("en-US")));
+        command.Parameters.AddWithValue("@updated_at", DateTime.Now.ToString("yyyy-MM-d", new CultureInfo("en-US")));
+                
+
+
+
+              try
+                {
+                    command.ExecuteNonQuery();
+                    MessageBox.Show("บันทึกข้อมูลสำเร็จ");
+                    raiseUpdate();
+                    this.Close();
+                }
+                catch (SqlException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+              
+            }
+        }
+    }
+
+
+public partial class frmSearch : Form
+    {
+        public delegate void UpdateDelegate(object sender, UpdateEventArgs args);
+        public event UpdateDelegate UpdateEventHandler;
+        frmMaster frmmaster;
+        public frmSearch(frmMaster master)
+        {
+            InitializeComponent();
+            frmmaster = master;
+            
+        }
+
+        public class UpdateEventArgs : EventArgs
+        {
+            public string Data { get; set; }
+        }
+
+        protected void raiseUpdate()
+        {
+            frmmaster.BindSearch();
+            UpdateEventArgs args = new UpdateEventArgs();
+            UpdateEventHandler?.Invoke(this, args);
+           
+        }
+
+        private void frmSearch_Load(object sender, EventArgs e)
+        {
+            dateTimePicker1.MinDate = new DateTime(2000, 1, 1);
+            dateTimePicker2.MinDate = new DateTime(2000, 1, 1);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            raiseUpdate();
+            //BindSearch();
+            //this.Close();
+        }
+    }
+
+
+
+  public partial class frmSearch : Form
+    {
+        public delegate void UpdateDelegate(object sender, UpdateEventArgs args);
+        public event UpdateDelegate UpdateEventHandler;
+        frmMaster frmmaster;
+        public frmSearch(frmMaster master)
+        {
+            InitializeComponent();
+            frmmaster = master;
+            
+        }
+
+        public class UpdateEventArgs : EventArgs
+        {
+            public string Data { get; set; }
+        }
+
+        protected void raiseUpdate()
+        {
+            frmmaster.BindSearch();
+            UpdateEventArgs args = new UpdateEventArgs();
+            UpdateEventHandler?.Invoke(this, args);
+           
+        }
+
+        private void frmSearch_Load(object sender, EventArgs e)
+        {
+            dateTimePicker1.MinDate = new DateTime(2000, 1, 1);
+            dateTimePicker2.MinDate = new DateTime(2000, 1, 1);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            raiseUpdate();
+            //BindSearch();
+            //this.Close();
+        }
+    }
+
